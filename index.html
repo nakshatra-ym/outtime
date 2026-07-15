@@ -22,7 +22,7 @@
     --radius:14px;
   }
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
+  html,body{margin:0;padding:0;overflow-x:hidden;}
   body{
     background:
       radial-gradient(ellipse 900px 500px at 50% -10%, rgba(242,169,59,0.08), transparent 60%),
@@ -61,7 +61,7 @@
     box-shadow:0 20px 50px -20px rgba(0,0,0,.6);
   }
 
-  .field{margin-bottom:18px;}
+  .field{margin-bottom:18px;min-width:0;}
   .field label{
     display:block;
     font-size:12px;
@@ -71,6 +71,8 @@
   }
   input[type="time"]{
     width:100%;
+    max-width:100%;
+    min-width:0;
     background:var(--card2);
     border:1px solid var(--line);
     color:var(--text);
@@ -80,9 +82,9 @@
     border-radius:9px;
     outline:none;
     transition:border-color .15s;
+    color-scheme:dark;
   }
   input[type="time"]:focus{border-color:var(--amber);}
-  input[type="time"]::-webkit-calendar-picker-indicator{filter:invert(0.7);cursor:pointer;}
 
   .shift-readout{
     font-family:'JetBrains Mono',monospace;
@@ -226,6 +228,7 @@
   .config-row .field{flex:1;margin-bottom:0;}
   .config-row input[type="number"]{
     width:100%;
+    min-width:0;
     background:var(--card2);
     border:1px solid var(--line);
     color:var(--text);
@@ -248,6 +251,8 @@
 
   @media (max-width:400px){
     .output .time{font-size:38px;}
+    input[type="time"]{font-size:16px;padding:10px 8px;}
+    .shift-readout{font-size:16px;padding:10px 8px;}
   }
 </style>
 </head>
@@ -463,9 +468,9 @@
     tagEnd.textContent = endClock.text + (endClock.rolled ? ' +1d' : '');
   }
 
-  // default clock-in to current time
+  // default clock-in time
   const DEFAULT_IN_TIME = '10:00';
-   (function setDefaultTime(){
+  (function setDefaultTime(){
     inTime.value = DEFAULT_IN_TIME;
   })();
 
