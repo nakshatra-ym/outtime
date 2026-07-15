@@ -464,9 +464,9 @@
   }
 
   // default clock-in to current time
-  (function setDefaultTime(){
-    const now = new Date();
-    inTime.value = pad(now.getHours()) + ':' + pad(now.getMinutes());
+  const DEFAULT_IN_TIME = '10:00';
+   (function setDefaultTime(){
+    inTime.value = DEFAULT_IN_TIME;
   })();
 
   inTime.addEventListener('input', render);
