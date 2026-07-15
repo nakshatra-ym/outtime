@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Out-Time Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#12151b;
+    --card:#191d24;
+    --card2:#1f242e;
+    --line:#2a2f3a;
+    --text:#eef1f6;
+    --text-dim:#8891a1;
+    --amber:#f2a93b;
+    --amber-dim:rgba(242,169,59,0.14);
+    --teal:#3ba7a0;
+    --notch:#e2543a;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse 900px 500px at 50% -10%, rgba(242,169,59,0.08), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Space Grotesk',sans-serif;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:32px 16px;
+  }
+  .mono{font-family:'JetBrains Mono',monospace;}
+  .wrap{width:100%;max-width:480px;}
+
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:.18em;
+    color:var(--amber);
+    text-transform:uppercase;
+    margin:0 0 6px 2px;
+  }
+  h1{
+    font-size:26px;
+    font-weight:700;
+    margin:0 0 22px 2px;
+    letter-spacing:-.01em;
+  }
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:24px;
+    box-shadow:0 20px 50px -20px rgba(0,0,0,.6);
+  }
+
+  .field{margin-bottom:18px;}
+  .field label{
+    display:block;
+    font-size:12px;
+    color:var(--text-dim);
+    margin-bottom:7px;
+    letter-spacing:.02em;
+  }
+  input[type="time"]{
+    width:100%;
+    background:var(--card2);
+    border:1px solid var(--line);
+    color:var(--text);
+    font-family:'JetBrains Mono',monospace;
+    font-size:20px;
+    padding:11px 12px;
+    border-radius:9px;
+    outline:none;
+    transition:border-color .15s;
+  }
+  input[type="time"]:focus{border-color:var(--amber);}
+  input[type="time"]::-webkit-calendar-picker-indicator{filter:invert(0.7);cursor:pointer;}
+
+  .shift-readout{
+    font-family:'JetBrains Mono',monospace;
+    font-size:20px;
+    background:var(--card2);
+    border:1px solid var(--line);
+    padding:11px 12px;
+    border-radius:9px;
+    color:var(--text-dim);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .shift-readout button{
+    background:none;border:none;color:var(--amber);
+    font-family:'JetBrains Mono',monospace;font-size:11px;
+    letter-spacing:.08em;cursor:pointer;padding:4px 6px;
+    text-transform:uppercase;
+  }
+
+  .stepper{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:var(--card2);
+    border:1px solid var(--line);
+    border-radius:9px;
+    padding:8px 8px 8px 14px;
+  }
+  .stepper .count{
+    font-family:'JetBrains Mono',monospace;
+    font-size:20px;
+    min-width:100px;
+    text-align:center;
+  }
+  .stepper .count small{
+    display:block;color:var(--text-dim);font-size:11px;margin-top:2px;
+  }
+  .stepper .btns{display:flex;gap:6px;}
+  .stepper button{
+    width:34px;height:34px;
+    border-radius:7px;
+    border:1px solid var(--line);
+    background:var(--bg);
+    color:var(--text);
+    font-size:17px;
+    cursor:pointer;
+    line-height:1;
+    transition:background .15s,border-color .15s;
+  }
+  .stepper button:hover{border-color:var(--amber);color:var(--amber);}
+  .stepper button:disabled{opacity:.3;cursor:not-allowed;}
+
+  /* ---- timeline / ruler signature element ---- */
+  .ruler-wrap{margin:26px 0 22px;}
+  .ruler{
+    position:relative;
+    height:52px;
+  }
+  .ruler .track{
+    position:absolute;top:24px;left:0;right:0;height:2px;
+    background:var(--line);
+  }
+  .ruler .segment{
+    position:absolute;top:24px;height:2px;
+    background:var(--amber);
+    transition:left .2s,width .2s;
+  }
+  .ruler .notch{
+    position:absolute;top:16px;width:2px;height:18px;
+    background:var(--notch);
+    transition:left .2s;
+  }
+  .ruler .point{
+    position:absolute;top:17px;width:8px;height:8px;border-radius:50%;
+    transform:translate(-50%,0);
+    transition:left .2s;
+  }
+  .ruler .point.start{background:var(--teal);}
+  .ruler .point.end{background:var(--amber);box-shadow:0 0 0 4px var(--amber-dim);}
+  .ruler .tag{
+    position:absolute;top:34px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;color:var(--text-dim);
+    transform:translateX(-50%);
+    white-space:nowrap;
+  }
+
+  .output{
+    text-align:center;
+    padding:20px 10px 6px;
+    border-top:1px dashed var(--line);
+    margin-top:4px;
+  }
+  .output .label{
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--text-dim);margin-bottom:6px;
+  }
+  .output .time{
+    font-family:'JetBrains Mono',monospace;
+    font-size:48px;font-weight:700;color:var(--amber);
+    letter-spacing:-.01em;
+    line-height:1;
+  }
+  .output .time .rollover{
+    font-size:14px;color:var(--notch);vertical-align:top;margin-left:4px;
+  }
+  .equation{
+    margin-top:12px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--text-dim);
+  }
+
+  /* config panel */
+  .config-toggle{
+    display:flex;align-items:center;gap:8px;
+    background:none;border:none;color:var(--text-dim);
+    font-family:'JetBrains Mono',monospace;font-size:11px;
+    letter-spacing:.08em;text-transform:uppercase;
+    cursor:pointer;margin:16px auto 0;padding:6px;
+  }
+  .config-toggle:hover{color:var(--amber);}
+  .config-toggle svg{transition:transform .2s;}
+  .config-toggle.open svg{transform:rotate(90deg);}
+
+  .config-panel{
+    max-height:0;
+    overflow:hidden;
+    transition:max-height .25s ease;
+  }
+  .config-panel.open{max-height:400px;}
+  .config-inner{
+    border-top:1px solid var(--line);
+    margin-top:14px;
+    padding-top:16px;
+  }
+  .config-row{
+    display:flex;gap:10px;margin-bottom:12px;
+  }
+  .config-row .field{flex:1;margin-bottom:0;}
+  .config-row input[type="number"]{
+    width:100%;
+    background:var(--card2);
+    border:1px solid var(--line);
+    color:var(--text);
+    font-family:'JetBrains Mono',monospace;
+    font-size:15px;
+    padding:9px 10px;
+    border-radius:8px;
+    outline:none;
+  }
+  .config-row input[type="number"]:focus{border-color:var(--amber);}
+  .config-note{
+    font-size:11px;color:var(--text-dim);margin-top:2px;
+  }
+
+  footer{
+    text-align:center;margin-top:16px;
+    font-size:11px;color:var(--text-dim);
+    font-family:'JetBrains Mono',monospace;
+  }
+
+  @media (max-width:400px){
+    .output .time{font-size:38px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="eyebrow">Time Office</div>
+  <h1>Out-Time Calculator</h1>
+
+  <div class="card">
+
+    <div class="field">
+      <label for="inTime">Clock-in time</label>
+      <input type="time" id="inTime">
+    </div>
+
+    <div class="field">
+      <label>Shift duration</label>
+      <div class="shift-readout">
+        <span id="shiftDisplay" class="mono">08:30</span>
+        <button type="button" id="openConfigFromShift">change in config →</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Short leaves</label>
+      <div class="stepper">
+        <div class="btns">
+          <button type="button" id="decLeave" aria-label="Decrease short leaves">−</button>
+        </div>
+        <div class="count">
+          <span id="leaveCount">0</span>
+          <small id="leaveSub">0 × 50m = 0m</small>
+        </div>
+        <div class="btns">
+          <button type="button" id="incLeave" aria-label="Increase short leaves">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="ruler-wrap">
+      <div class="ruler" id="ruler">
+        <div class="track"></div>
+        <div class="segment" id="segment"></div>
+        <div class="point start" id="pointStart"></div>
+        <div class="point end" id="pointEnd"></div>
+        <div class="tag" id="tagStart">--:--</div>
+        <div class="tag" id="tagEnd">--:--</div>
+      </div>
+    </div>
+
+    <div class="output">
+      <div class="label">Out at</div>
+      <div class="time"><span id="outTime">--:--</span><span class="rollover" id="rollover"></span></div>
+      <div class="equation" id="equation"></div>
+    </div>
+
+    <button type="button" class="config-toggle" id="configToggle">
+      <svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 1 L8 5 L2 9" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+      Config
+    </button>
+
+    <div class="config-panel" id="configPanel">
+      <div class="config-inner">
+        <div class="config-row">
+          <div class="field">
+            <label for="shiftHours">Shift hours</label>
+            <input type="number" id="shiftHours" min="0" max="23" value="8">
+          </div>
+          <div class="field">
+            <label for="shiftMinutes">Shift minutes</label>
+            <input type="number" id="shiftMinutes" min="0" max="59" value="30">
+          </div>
+        </div>
+        <div class="config-row">
+          <div class="field">
+            <label for="leaveDuration">Minutes per short leave</label>
+            <input type="number" id="leaveDuration" min="1" max="240" value="50">
+          </div>
+          <div class="field">
+            <label for="maxLeaves">Max short leaves</label>
+            <input type="number" id="maxLeaves" min="1" max="12" value="4">
+          </div>
+        </div>
+        <div class="config-note">Changes apply immediately. Not saved between visits.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>out = clock-in + shift − (leaves × leave duration)</footer>
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+
+  const inTime = $('inTime');
+  const shiftDisplay = $('shiftDisplay');
+  const shiftHours = $('shiftHours');
+  const shiftMinutes = $('shiftMinutes');
+  const leaveDuration = $('leaveDuration');
+  const maxLeaves = $('maxLeaves');
+  const leaveCount = $('leaveCount');
+  const leaveSub = $('leaveSub');
+  const decLeave = $('decLeave');
+  const incLeave = $('incLeave');
+  const outTimeEl = $('outTime');
+  const rolloverEl = $('rollover');
+  const equationEl = $('equation');
+  const configToggle = $('configToggle');
+  const configPanel = $('configPanel');
+  const openConfigFromShift = $('openConfigFromShift');
+  const segment = $('segment');
+  const pointStart = $('pointStart');
+  const pointEnd = $('pointEnd');
+  const tagStart = $('tagStart');
+  const tagEnd = $('tagEnd');
+
+  let leaves = 0;
+
+  function pad(n){ return String(n).padStart(2,'0'); }
+
+  function minutesToClock(mins){
+    const rolled = mins >= 1440;
+    const m = ((mins % 1440) + 1440) % 1440;
+    return { text: pad(Math.floor(m/60)) + ':' + pad(m%60), rolled };
+  }
+
+  function parseTimeInput(val){
+    if(!val) return null;
+    const [h,m] = val.split(':').map(Number);
+    return h*60+m;
+  }
+
+  function currentShiftMinutes(){
+    const h = Math.max(0, parseInt(shiftHours.value,10) || 0);
+    const m = Math.max(0, parseInt(shiftMinutes.value,10) || 0);
+    return h*60+m;
+  }
+
+  function currentLeaveDuration(){
+    return Math.max(1, parseInt(leaveDuration.value,10) || 50);
+  }
+
+  function currentMaxLeaves(){
+    return Math.max(1, parseInt(maxLeaves.value,10) || 4);
+  }
+
+  function updateShiftDisplay(){
+    const h = Math.max(0, parseInt(shiftHours.value,10) || 0);
+    const m = Math.max(0, parseInt(shiftMinutes.value,10) || 0);
+    shiftDisplay.textContent = pad(h) + ':' + pad(m);
+  }
+
+  function updateLeaveButtons(){
+    const max = currentMaxLeaves();
+    if(leaves > max) leaves = max;
+    decLeave.disabled = leaves <= 0;
+    incLeave.disabled = leaves >= max;
+  }
+
+  function render(){
+    updateShiftDisplay();
+    updateLeaveButtons();
+
+    const dur = currentLeaveDuration();
+    leaveCount.textContent = leaves;
+    leaveSub.textContent = leaves + ' × ' + dur + 'm = ' + (leaves*dur) + 'm';
+
+    const start = parseTimeInput(inTime.value);
+    const shift = currentShiftMinutes();
+    const deduction = leaves * dur;
+
+    if(start === null){
+      outTimeEl.textContent = '--:--';
+      rolloverEl.textContent = '';
+      equationEl.textContent = 'Enter a clock-in time to calculate.';
+      segment.style.width = '0%';
+      pointStart.style.left = '0%';
+      pointEnd.style.left = '0%';
+      tagStart.style.left = '0%';
+      tagEnd.style.left = '0%';
+      tagStart.textContent = '--:--';
+      tagEnd.textContent = '--:--';
+      return;
+    }
+
+    const endAbs = start + shift - deduction;
+    const startClock = minutesToClock(start);
+    const endClock = minutesToClock(endAbs);
+
+    outTimeEl.textContent = endClock.text;
+    rolloverEl.textContent = endClock.rolled ? '+1d' : '';
+
+    let eq = startClock.text + ' + ' + pad(Math.floor(shift/60)) + ':' + pad(shift%60);
+    if(deduction > 0){
+      eq += ' − ' + leaves + '×' + dur + 'm';
+    }
+    eq += ' = ' + endClock.text + (endClock.rolled ? ' (next day)' : '');
+    equationEl.textContent = eq;
+
+    // ruler: map start -> end across a 0-100% track, clamped to a sane visual window
+    const span = Math.max(shift, 60); // avoid degenerate width
+    const leftPct = 6, rightPct = 94;
+    pointStart.style.left = leftPct + '%';
+    pointEnd.style.left = rightPct + '%';
+    segment.style.left = leftPct + '%';
+    segment.style.width = (rightPct-leftPct) + '%';
+    tagStart.style.left = leftPct + '%';
+    tagEnd.style.left = rightPct + '%';
+    tagStart.textContent = startClock.text;
+    tagEnd.textContent = endClock.text + (endClock.rolled ? ' +1d' : '');
+  }
+
+  // default clock-in to current time
+  (function setDefaultTime(){
+    const now = new Date();
+    inTime.value = pad(now.getHours()) + ':' + pad(now.getMinutes());
+  })();
+
+  inTime.addEventListener('input', render);
+  shiftHours.addEventListener('input', render);
+  shiftMinutes.addEventListener('input', render);
+  leaveDuration.addEventListener('input', render);
+  maxLeaves.addEventListener('input', render);
+
+  decLeave.addEventListener('click', () => { leaves = Math.max(0, leaves-1); render(); });
+  incLeave.addEventListener('click', () => { leaves = Math.min(currentMaxLeaves(), leaves+1); render(); });
+
+  function toggleConfig(open){
+    const isOpen = open !== undefined ? open : !configPanel.classList.contains('open');
+    configPanel.classList.toggle('open', isOpen);
+    configToggle.classList.toggle('open', isOpen);
+  }
+  configToggle.addEventListener('click', () => toggleConfig());
+  openConfigFromShift.addEventListener('click', () => toggleConfig(true));
+
+  render();
+})();
+</script>
+
+</body>
+</html>
